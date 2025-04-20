@@ -25,22 +25,45 @@ def convert_folder(folder_path):
                 converted += 1
     return converted
 
+def prompt_for_path():
+    """Prompts the user for a file or folder path."""
+    print("Enter a file or folder path to convert (or press Enter to exit):")
+    path = input().strip()
+    if not path:
+        return None
+    if not os.path.exists(path):
+        print(f'Error: {path} does not exist')
+        return None
+    return path
+
 def main():
     parser = argparse.ArgumentParser(description='Image to WebP Converter')
     parser.add_argument('paths', nargs='*', help='Paths to files or folders to convert')
     parser.add_argument('--folder', '-f', help='Path to the folder to convert all images in it')
     args = parser.parse_args()
 
-    if not args.paths and not args.folder:
-        print('Error: Specify paths to files/folders or use --folder/-f')
-        print('Example: python webp_converter_console.py image.jpg or python webp_converter_console.py --folder path_to_folder')
-        return
+    # Initialize paths to process
+    paths_to_process = args.paths
+    folder_to_process = args.folder
 
-    # Handling paths passed as arguments (including Drag and Drop)
+    # If no arguments provided, prompt for a path
+    if not paths_to_process and not folder_to_process:
+        path = prompt_for_path()
+        if not path:
+            print('No path provided. Exiting.')
+            return
+        if os.path.isdir(path):
+            folder_to_process = path
+        else:
+            paths_to_process = [path]
+
+    # Process paths
     converted_files = 0
     converted_folders = 0
-    if args.paths:
-        for path in args.paths:
+
+    # Handle paths passed as arguments (including Drag and Drop)
+    if paths_to_process:
+        for path in paths_to_process:
             if not os.path.exists(path):
                 print(f'Skip: {path} (does not exist)')
                 continue
@@ -57,19 +80,19 @@ def main():
             else:
                 print(f'Skip: {path} (not supported format)')
 
-    # Обработка папки, указанной через --folder
-    if args.folder:
-        if not os.path.isdir(args.folder):
-            print(f'Error: {args.folder} is not a folder or does not exist')
+    # Handle folder specified via --folder
+    if folder_to_process:
+        if not os.path.isdir(folder_to_process):
+            print(f'Error: {folder_to_process} is not a folder or does not exist')
         else:
-            count = convert_folder(args.folder)
+            count = convert_folder(folder_to_process)
             if count > 0:
                 converted_folders += 1
-                print(f'Converted {count} images in folder {args.folder}')
+                print(f'Converted {count} images in folder {folder_to_process}')
             else:
-                print(f'No supported images found in folder {args.folder}')
+                print(f'No supported images found in folder {folder_to_process}')
 
-    # Итоговое сообщение
+    # Final message
     if converted_files > 0 or converted_folders > 0:
         print(f'\nTotal: {converted_files} files and {converted_folders} folders converted')
     else:
